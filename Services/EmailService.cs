@@ -32,18 +32,18 @@ namespace AlertaBoletaService.Services
                 
                 if (sucesso)
                 {
-                    _logger.LogInformation($"Email enviado com sucesso via API centralizada para: {email.Para}");
+                    _logger.LogInformation($"Email sent successfully via centralized API to: {email.Para}");
                 }
                 else
                 {
-                    _logger.LogError($"Falha ao enviar email via API centralizada para: {email.Para}");
+                    _logger.LogError($"Failed to send email via centralized API to: {email.Para}");
                 }
 
                 return sucesso;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao enviar email via API centralizada para: {email.Para}");
+                _logger.LogError(ex, $"Error sending email via centralized API to: {email.Para}");
                 return false;
             }
         }
@@ -59,41 +59,41 @@ namespace AlertaBoletaService.Services
             var tabelaBoletas = GerarTabelaBoletas(boletas);
 
             var mensagem = $@"
-                <div style='background-color: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #ffc107;'>
-                    <h3 style='color: #856404; margin: 0 0 10px 0;'>Resumo do Alerta</h3>
-                    <p><strong>Total de boletas:</strong> {resumo.Total}</p>
-                    <p><strong>Valor total:</strong> R$ {resumo.ValorTotal:N2}</p>
+                <div style='background-color: #E3E3E3; padding: 15px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #555555;'>
+                    <h3 style='font-style: bold; margin: 0 0 10px 0;'>Alert Summary</h3>
+                    <p><strong>Total short confirmations:</strong> {resumo.Total}</p>
+                    <p><strong>Total value:</strong> USD {resumo.ValorTotal:N2}</p>
                 </div>
 
                 {tabelaBoletas}
 
                 <div style='margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;'>
-                    <p style='color: #dc3545; font-weight: bold; margin: 0;'>AÇÃO NECESSÁRIA:</p>
-                    <p style='margin: 5px 0 0 0;'>As boletas listadas acima estão pendentes de reaprovação e requerem atenção imediata.</p>
-                    <p style='margin: 5px 0 0 0;'>Acesse o sistema Comex para processar estas aprovações.</p>
+                    <p style='color: #dc3545; font-weight: bold; margin: 0;'>ACTION REQUIRED:</p>
+                    <p style='margin: 5px 0 0 0;'>The short confirmations listed above are pending reapproval and require immediate attention.</p>
+                    <p style='margin: 5px 0 0 0;'>Access the Comex system to process these approvals.</p>
                 </div>";
 
             var layoutEmail = new LayoutEmail(
                 sistema: "AlertaBoleta - Comex",
-                assunto: $"ATENÇÃO: {boletas.Count} boleta(s) pendente(s)",
+                assunto: $"ATTENTION: {boletas.Count} pending short confirmation(s)",
                 mensagem: mensagem
             );
 
             return layoutEmail.ToString();
         }
 
-        private string GerarTabelaBoletas(List<BoletaReaprovacao> boletas)
+        private static string GerarTabelaBoletas(List<BoletaReaprovacao> boletas)
         {
             var tabela = @"
                 <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
                     <thead>
                         <tr>
-                            <th style='background-color: #dc3545; color: white; padding: 12px; text-align: left; font-weight: bold;'>Nº Boleta</th>
-                            <th style='background-color: #dc3545; color: white; padding: 12px; text-align: left; font-weight: bold;'>Contrato</th>
-                            <th style='background-color: #dc3545; color: white; padding: 12px; text-align: left; font-weight: bold;'>Produto</th>
-                            <th style='background-color: #dc3545; color: white; padding: 12px; text-align: left; font-weight: bold;'>Valor</th>
-                            <th style='background-color: #dc3545; color: white; padding: 12px; text-align: left; font-weight: bold;'>Status</th>
-                            <th style='background-color: #dc3545; color: white; padding: 12px; text-align: left; font-weight: bold;'>Empresa</th>
+                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Short Confirmation #</th>
+                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Contract</th>
+                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Product</th>
+                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Value</th>
+                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Status</th>
+                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Company</th>
                         </tr>
                     </thead>
                     <tbody>";
@@ -106,7 +106,7 @@ namespace AlertaBoletaService.Services
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NumeroBoleta}</td>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NumeroContrato}</td>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NomeProduto}</td>
-                            <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;'>R$ {boleta.ValorBoleta:N2}</td>
+                            <td style='padding: 10px; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold;'>USD {boleta.ValorBoleta:N2}</td>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.StatusAtual}</td>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NomeEmpresa}</td>
                         </tr>";

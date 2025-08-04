@@ -24,13 +24,13 @@ namespace AlertaBoletaService.Infrastructure
                 var result = await command.ExecuteScalarAsync();
                 
                 string? valor = result?.ToString();
-                _logger.LogInformation($"Parametrização '{chave}': {valor ?? "não encontrada"}");
+                _logger.LogInformation($"Configuration '{chave}': {valor ?? "not found"}");
                 
                 return valor;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao buscar parametrização '{chave}'");
+                _logger.LogError(ex, $"Error searching configuration '{chave}'");
                 return null;
             }
         }

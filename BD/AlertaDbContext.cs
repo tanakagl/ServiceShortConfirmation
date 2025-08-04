@@ -52,11 +52,6 @@ namespace AlertaBoletaService.BD
                     .HasMaxLength(1)
                     .HasDefaultValue("N");
                     
-                entity.Property(e => e.PeriodoHorasBoleta)
-                    .HasColumnName("NR_PERIODO_HORAS_BOLETA")
-                    .HasColumnType("NUMBER")
-                    .HasDefaultValue(24);
-                    
                 entity.Property(e => e.UltimaExecucaoBoleta)
                     .HasColumnName("DT_ULTIMA_EXECUCAO_BOLETA")
                     .HasColumnType("DATE");

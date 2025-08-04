@@ -26,25 +26,25 @@ namespace AlertaBoletaService.Services
             try
             {
                 var connectionString = Configuration.GetValue<string>("ConnectionStrings:OracleConnection");
-                _logger.LogInformation("Serviço de Alerta de Boletas iniciado - Execução única");
-                _logger.LogInformation($"Testando conexão Oracle...");
+                _logger.LogInformation("Short Confirmation Alert Service started - Single execution");
+                _logger.LogInformation($"Testing Oracle connection...");
                 
                 if (!await TestarConexaoAsync(connectionString))
                 {
-                    _logger.LogError("Falha no teste de conexão. Finalizando serviço.");
+                    _logger.LogError("Connection test failed. Stopping service.");
                     Environment.ExitCode = 1;
                     return;
                 }
                 
-                _logger.LogInformation("Conexão Oracle OK. Iniciando processamento...");
+                _logger.LogInformation("Oracle connection OK. Starting processing...");
                 
                 await ProcessarAlertasAsync();
                 
-                _logger.LogInformation("Execução concluída. Finalizando serviço...");
+                _logger.LogInformation("Execution completed. Stopping service...");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro durante execução do serviço");
+                _logger.LogError(ex, "Error during service execution");
                 Environment.ExitCode = 1;
             }
             finally
@@ -68,8 +68,8 @@ namespace AlertaBoletaService.Services
                 {
                     var data = reader.GetDateTime(0);
                     var usuario = reader.GetString(1);
-                    _logger.LogInformation($"Data do servidor: {data:dd/MM/yyyy HH:mm:ss}");
-                    _logger.LogInformation($"Usuário conectado: {usuario}");
+                    _logger.LogInformation($"Server date: {data:dd/MM/yyyy HH:mm:ss}");
+                    _logger.LogInformation($"Connected user: {usuario}");
                 }
                 
                 await connection.CloseAsync();
@@ -77,35 +77,35 @@ namespace AlertaBoletaService.Services
             }
             catch (OracleException ex)
             {
-                _logger.LogError($"Erro Oracle ({ex.Number}): {ex.Message}");
+                _logger.LogError($"Oracle error ({ex.Number}): {ex.Message}");
                 
                 switch (ex.Number)
                 {
                     case 1017:
-                        _logger.LogError("Usuário/senha inválidos");
+                        _logger.LogError("Invalid username/password");
                         break;
                     case 12154:
-                        _logger.LogError("TNS: Não foi possível resolver o identificador de conexão");
+                        _logger.LogError("TNS: Could not resolve connection identifier");
                         break;
                     case 12514:
-                        _logger.LogError("TNS: listener não reconhece o serviço solicitado");
+                        _logger.LogError("TNS: listener does not recognize the requested service");
                         break;
                     case 12541:
-                        _logger.LogError("TNS: sem listener - verifique se o Oracle está rodando");
+                        _logger.LogError("TNS: no listener - check if Oracle is running");
                         break;
                     case 12170:
                     case 12571:
-                        _logger.LogError("TNS: connect timeout - problema de rede ou firewall");
+                        _logger.LogError("TNS: connect timeout - network or firewall issue");
                         break;
                     default:
-                        _logger.LogError("Verifique host, porta, SID e credenciais");
+                        _logger.LogError("Check host, port, SID and credentials");
                         break;
                 }
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro geral de conexão: {ex.Message}");
+                _logger.LogError($"General connection error: {ex.Message}");
                 return false;
             }
         }
@@ -116,17 +116,17 @@ namespace AlertaBoletaService.Services
             var boletaRepo = scope.ServiceProvider.GetRequiredService<IBoletaRepository>();
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
             
-            _logger.LogInformation("Iniciando processamento de alertas...");
+            _logger.LogInformation("Starting alert processing...");
             
             var empresasAtivas = await boletaRepo.ObterEmpresasAtivasAsync();
-            _logger.LogInformation($"Encontradas {empresasAtivas.Count} empresas com alerta ativo");
+            _logger.LogInformation($"Found {empresasAtivas.Count} companies with active alerts");
             
             int empresasProcessadas = 0;
             int emailsEnviados = 0;
             
             foreach (var empresa in empresasAtivas)
             {
-                _logger.LogInformation($"Processando empresa {empresa.IdEmpresa}...");
+                _logger.LogInformation($"Processing company {empresa.IdEmpresa}...");
                 
                 var resultadoProcessamento = await ProcessarEmpresaAsync(empresa, boletaRepo, emailService);
                 empresasProcessadas++;
@@ -137,7 +137,7 @@ namespace AlertaBoletaService.Services
                 }
             }
             
-            _logger.LogInformation($"Processamento concluído - {empresasProcessadas} empresas processadas, {emailsEnviados} emails enviados");
+            _logger.LogInformation($"Processing completed - {empresasProcessadas} companies processed, {emailsEnviados} emails sent");
         }
         
         private async Task<bool> ProcessarEmpresaAsync(
@@ -151,7 +151,7 @@ namespace AlertaBoletaService.Services
                 
                 if (emailsUsuarios.Count == 0)
                 {
-                    _logger.LogWarning($"Empresa {empresa.IdEmpresa}: nenhum usuário com permissão para receber alertas encontrado");
+                    _logger.LogWarning($"Company {empresa.IdEmpresa}: no users with permission to receive alerts found");
                     await boletaRepo.AtualizarUltimaExecucaoAsync(empresa.IdEmpresa);
                     return false;
                 }
@@ -160,7 +160,7 @@ namespace AlertaBoletaService.Services
                 
                 if (boletas.Count != 0)
                 {
-                    _logger.LogWarning($"Empresa {empresa.IdEmpresa}: {boletas.Count} boleta(s) em reaprovação encontradas");
+                    _logger.LogWarning($"Company {empresa.IdEmpresa}: {boletas.Count} short confirmation(s) pending reapproval found");
                     
                     var emailBody = emailService.GerarCorpoEmailBoletas(boletas);
                     var emailsPara = string.Join(";", emailsUsuarios);
@@ -168,32 +168,32 @@ namespace AlertaBoletaService.Services
                     var email = new AlertaEmail
                     {
                         Para = emailsPara,
-                        Assunto = $"URGENTE: {boletas.Count} boleta(s) em reaprovação - Empresa {empresa.IdEmpresa}",
+                        Assunto = $"ALERT: {boletas.Count} short confirmation(s) pending reapproval",
                         Corpo = emailBody
                     };
                     
                     if (await emailService.EnviarEmailAsync(email))
                     {
                         await boletaRepo.AtualizarUltimaExecucaoAsync(empresa.IdEmpresa);
-                        _logger.LogInformation($"Empresa {empresa.IdEmpresa}: alerta enviado com sucesso para {emailsUsuarios.Count} usuário(s)");
+                        _logger.LogInformation($"Company {empresa.IdEmpresa}: alert sent successfully to {emailsUsuarios.Count} user(s)");
                         return true;
                     }
                     else
                     {
-                        _logger.LogError($"Empresa {empresa.IdEmpresa}: falha ao enviar email");
+                        _logger.LogError($"Company {empresa.IdEmpresa}: failed to send email");
                         return false;
                     }
                 }
                 else
                 {
-                    _logger.LogInformation($"Empresa {empresa.IdEmpresa}: nenhuma boleta pendente");
+                    _logger.LogInformation($"Company {empresa.IdEmpresa}: no pending short confirmations");
                     await boletaRepo.AtualizarUltimaExecucaoAsync(empresa.IdEmpresa);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao processar empresa {empresa.IdEmpresa}");
+                _logger.LogError(ex, $"Error processing company {empresa.IdEmpresa}");
                 return false;
             }
         }

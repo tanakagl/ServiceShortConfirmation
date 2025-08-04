@@ -2,21 +2,14 @@ using AlertaBoletaService.Provider;
 
 namespace AlertaBoletaService.Infrastructure
 {
-    public class CentralizedEmailService
+    public class CentralizedEmailService(
+        ILogger<CentralizedEmailService> logger,
+        HttpClient httpClient,
+        ParametrizacaoRepository parametrizacaoRepository)
     {
-        private readonly ILogger<CentralizedEmailService> _logger;
-        private readonly HttpClient _httpClient;
-        private readonly ParametrizacaoRepository _parametrizacaoRepository;
-
-        public CentralizedEmailService(
-            ILogger<CentralizedEmailService> logger, 
-            HttpClient httpClient,
-            ParametrizacaoRepository parametrizacaoRepository)
-        {
-            _logger = logger;
-            _httpClient = httpClient;
-            _parametrizacaoRepository = parametrizacaoRepository;
-        }
+        private readonly ILogger<CentralizedEmailService> _logger = logger;
+        private readonly HttpClient _httpClient = httpClient;
+        private readonly ParametrizacaoRepository _parametrizacaoRepository = parametrizacaoRepository;
 
         public async Task<bool> SendEmailAsync(Email email)
         {
@@ -25,12 +18,12 @@ namespace AlertaBoletaService.Infrastructure
                 var apiUrl = await _parametrizacaoRepository.GetParametrizacaoAsync("URL_API_EMAIL");
                 if (string.IsNullOrEmpty(apiUrl))
                 {
-                    _logger.LogError("URL_API_EMAIL não encontrada na parametrização do banco");
+                    _logger.LogError("URL_API_EMAIL not found in database configuration");
                     return false;
                 }
 
                 var requestUrl = $"{apiUrl}email/enviar";   
-                _logger.LogInformation($"Enviando email via API ({apiUrl}) para: {email.To}");
+                _logger.LogInformation($"Sending email via API ({apiUrl}) to: {email.To}");
 
                 HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUrl);
 
@@ -61,18 +54,18 @@ namespace AlertaBoletaService.Infrastructure
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation($"Email enviado com sucesso via API para: {email.To}");
+                    _logger.LogInformation($"Email sent successfully via API to: {email.To}");
                     return true;
                 }
                 else
                 {
-                    _logger.LogError($"Falha ao enviar email via API. Status: {httpResponse.StatusCode}, Response: {bodyResponse}");
+                    _logger.LogError($"Failed to send email via API. Status: {httpResponse.StatusCode}, Response: {bodyResponse}");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao enviar email via API para: {email.To}");
+                _logger.LogError(ex, $"Error sending email via API to: {email.To}");
                 return false;
             }
         }

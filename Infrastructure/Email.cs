@@ -27,38 +27,9 @@ namespace AlertaBoletaService.Infrastructure
 
             if (ambiente == "Development" || ambiente == "Homolog")
             {
-                To = "matheo.bonucia@amaggi.com.br";
+                To = "ti.comex@amaggi.com.br";
                 Subject = $"[{ambiente}] AlertaBoleta - {subject}";
             }
         }
-
-        public void SetData(DateTime? dataAgendamento)
-        {
-            DataAgendamento = dataAgendamento;
-        }
-
-        public void AddAttachment(List<string> attachment)
-        {
-            _attachments?.AddRange(attachment);
-        }
-
-        public void SetCC(string cc)
-        {
-            CC = cc;
-        }
-
-        public void SetCCO(string cco)
-        {
-            CCO = cco;
-        }
-    }
-
-    public class ResponseEmail
-    {
-        [JsonPropertyName("sucess")]
-        public bool Sucess { get; set; }
-        
-        [JsonPropertyName("message")]
-        public string? Message { get; set; }
     }
 } 

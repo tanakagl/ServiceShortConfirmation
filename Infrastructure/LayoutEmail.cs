@@ -41,7 +41,6 @@ namespace AlertaBoletaService.Infrastructure
             sb.Append("    		font-family: Arial, sans-serif;");
             sb.Append("		}");
             sb.Append("		.topo{");
-            sb.Append("			background-color: #dc3545;");
             sb.Append("			width: 100%;");
             sb.Append("			padding: 20px 0;");
             sb.Append("			text-align: center;");
@@ -53,13 +52,13 @@ namespace AlertaBoletaService.Infrastructure
             sb.Append("			width: 100%;");
             sb.Append("    		margin-top: 30px;");
             sb.Append("    		padding: 15px;");
-            sb.Append("    		background-color: #6c757d;");
+            sb.Append("    		background-color: #808080;");
             sb.Append("    		font-size: 12px;");
             sb.Append("    		text-align: center;");
             sb.Append("    		color: #FFFFFF;");
             sb.Append("		}");
             sb.Append("		.assunto{");
-            sb.Append("			border-bottom: 3px solid #dc3545;");
+            sb.Append("			border-bottom: 3px solid #E3E3E3;");
             sb.Append("			margin: 20px;");
             sb.Append("			padding-bottom: 10px;");
             sb.Append("			font-size: 20px;");
@@ -75,10 +74,10 @@ namespace AlertaBoletaService.Infrastructure
             sb.Append("	</style>");
             sb.Append("</head>");
             sb.Append("<body>");
-            sb.Append("	<div class='topo'>SISTEMA COMEX - ALERTA DE BOLETAS</div>");
+            sb.Append("	<div class='topo'>COMEX SYSTEM - SHORT CONFIRMATION ALERTS</div>");
             sb.Append("	<div class='assunto'>" + _assunto + "</div>");
             sb.Append("	<div class='mensagem'>" + _mensagem + "</div>");
-            sb.Append("	<div class='footer'>E-mail enviado automaticamente por " + _sistema + " em " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</div>");
+            sb.Append("	<div class='footer'>Email sent automatically by " + _sistema + " on " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + "</div>");
             sb.Append("</body>");
             sb.Append("</html>");
             return sb.ToString();

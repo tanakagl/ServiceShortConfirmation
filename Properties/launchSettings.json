@@ -9,6 +9,15 @@
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5000;https://localhost:5001"
     },
+    "AlertaBoletaService-Homolog": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Homolog",
+        "ASPNETCORE_ENVIRONMENT": "Homolog"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5000;https://localhost:5001"
+    },
     "Docker": {
       "commandName": "Docker",
       "publishAllPorts": true,

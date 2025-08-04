@@ -23,8 +23,8 @@ namespace AlertaBoletaService
                     services.AddScoped<IBoletaRepository, BoletaRepository>();
                     
                     services.AddHttpClient();
-                    services.AddScoped<AlertaBoletaService.Infrastructure.ParametrizacaoRepository>();
-                    services.AddScoped<AlertaBoletaService.Infrastructure.CentralizedEmailService>();
+                    services.AddScoped<Infrastructure.ParametrizacaoRepository>();
+                    services.AddScoped<Infrastructure.CentralizedEmailService>();
                     services.AddScoped<IEmailService, EmailService>();
                     
                     services.AddHostedService<AlertaWorkerService>();

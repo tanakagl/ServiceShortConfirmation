@@ -35,9 +35,10 @@ namespace AlertaBoletaService.Repositories
                 command.CommandText = @"
                 SELECT 
                     b.ID_BOLETA,
+                    mc.NR_CONTRATO,
                     b.NR_BOLETA,
                     CASE 
-                        WHEN b.DS_STATUS_BOLETA = '5' THEN 'Pendente Reaprovação'
+                        WHEN b.DS_STATUS_BOLETA = '5' THEN 'Pending Re-Approval'
                         ELSE b.DS_STATUS_BOLETA 
                     END as DS_STATUS_BOLETA,
                     b.NR_VALOR_TOTAL_CONTRATO,
@@ -46,6 +47,7 @@ namespace AlertaBoletaService.Repositories
                 FROM OPUS.MV_BOLETA b
                 LEFT JOIN OPUS.MV_PRODUTO p ON p.ID_PRODUTO = b.ID_PRODUTO
                 LEFT JOIN OPUS.SIGAM_EMPRESA se ON se.COD_EMPRESA = b.CD_EMPRESA
+                LEFT JOIN OPUS.MV_CONTRATO mc ON mc.ID_BOLETA  = b.ID_BOLETA 
                 WHERE b.CD_EMPRESA = :empresaId
                 AND b.DS_STATUS_BOLETA = '5'
                 ORDER BY b.DT_BOLETA ASC";
@@ -58,8 +60,8 @@ namespace AlertaBoletaService.Repositories
                 {
                     boletas.Add(new BoletaReaprovacao
                     {
-                        NumeroBoleta = reader.IsDBNull("NR_BOLETA") ? "" : reader.GetString("NR_BOLETA"),
-                        NumeroContrato = reader.IsDBNull("ID_BOLETA") ? "" : reader.GetInt32("ID_BOLETA").ToString(),
+                        NumeroBoleta = reader.IsDBNull("NR_BOLETA") ? "" : reader.GetValue("NR_BOLETA")?.ToString() ?? "",
+                        NumeroContrato = reader.IsDBNull("NR_CONTRATO") ? "" : reader.GetString("NR_CONTRATO"),
                         NomeProduto = reader.IsDBNull("NOME_PRODUTO") ? "N/I" : reader.GetString("NOME_PRODUTO"),
                         StatusAtual = reader.IsDBNull("DS_STATUS_BOLETA") ? "RP" : reader.GetString("DS_STATUS_BOLETA"),
                         ValorBoleta = reader.IsDBNull("NR_VALOR_TOTAL_CONTRATO") ? 0 : reader.GetDecimal("NR_VALOR_TOTAL_CONTRATO"),
@@ -69,7 +71,7 @@ namespace AlertaBoletaService.Repositories
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao buscar boletas para empresa {empresaId}");
+                _logger.LogError(ex, $"Error searching short confirmations for company {empresaId}");
             }
 
             return boletas;
@@ -113,20 +115,17 @@ namespace AlertaBoletaService.Repositories
                     }
                 }
                 
-                _logger.LogInformation($"Encontrados {emails.Count} emails de usuários com permissão para aprovar boletas");
+                _logger.LogInformation($"Found {emails.Count} user emails with permission to approve short confirmations");
                 
                 if (emails.Count == 0)
                 {
-                    _logger.LogWarning("Nenhum email encontrado para receber alertas");
+                    _logger.LogWarning("No emails found to receive alerts");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Erro ao buscar emails de usuários com permissão para aprovar boletas");
+                _logger.LogError(ex, $"Error searching user emails with permission to approve short confirmations");
             }
-
-            emails.Clear();
-            emails.Add("matheo.bonucia@amaggi.com.br");
 
             return emails;
         }

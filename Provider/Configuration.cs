@@ -42,12 +42,12 @@ namespace AlertaBoletaService.Provider
             var config = GetConfiguration();
             
             string jsonPath = name.Replace(":", ".");
-            JToken? token = config.SelectToken(jsonPath);
+            JToken? token = config.SelectToken(jsonPath) ?? throw new ArgumentException($"Configuração '{name}' não encontrada no appsettings.json. Caminho JSON: '{jsonPath}'");
+
+            T? value = token.Value<T>();
+            if (value == null)
+                throw new ArgumentException($"Configuração '{name}' possui valor nulo ou inválido no appsettings.json.");
             
-            if (token == null)
-                throw new ArgumentException($"Configuração '{name}' não encontrada no appsettings.json. Caminho JSON: '{jsonPath}'");
-                
-            T value = token.Value<T>();
             _cache.TryAdd(cacheKey, value);
             
             return value;
