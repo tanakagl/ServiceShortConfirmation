@@ -24,34 +24,7 @@ namespace AlertaBoletaService.Models
         public DateTime? UltimaExecucaoBoleta { get; set; }
         
         [NotMapped]
-        public bool FlagAtivo 
-        { 
-            get => FlagNotificaBoleta == "S"; 
-            set => FlagNotificaBoleta = value ? "S" : "N"; 
-        }
-        
-        [NotMapped]
-        public int PeriodoHoras 
-        { 
-            get => PeriodoHorasBoleta; 
-            set => PeriodoHorasBoleta = value; 
-        }
-        
-        [NotMapped]
-        public DateTime? UltimaExecucao 
-        { 
-            get => UltimaExecucaoBoleta; 
-            set => UltimaExecucaoBoleta = value; 
-        }
-        
-        [NotMapped]
         public string EmailDestinatarios { get; set; } = "";
         
-        [NotMapped]
-        public string EmailNotificaBoleta 
-        { 
-            get => EmailDestinatarios; 
-            set => EmailDestinatarios = value; 
-        }
     }
 } 

@@ -162,7 +162,7 @@ namespace AlertaBoletaService.Services
                 {
                     _logger.LogWarning($"Empresa {empresa.IdEmpresa}: {boletas.Count} boleta(s) em reaprovação encontradas");
                     
-                    var emailBody = emailService.GerarCorpoEmailBoletas(boletas, $"Empresa {empresa.IdEmpresa}");
+                    var emailBody = emailService.GerarCorpoEmailBoletas(boletas);
                     var emailsPara = string.Join(";", emailsUsuarios);
                     
                     var email = new AlertaEmail

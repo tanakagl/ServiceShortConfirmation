@@ -129,16 +129,15 @@ O serviço respeita o **período configurado por empresa**:
 O sistema busca emails de usuários com permissão para renovar boletas:
 
 ```sql
--- Query atual (temporária)
-SELECT DISTINCT u.EMAIL 
-FROM MC_USUARIO u 
-WHERE u.CD_EMPRESA = :empresaId 
-  AND u.ATIVO = 'S'
-  AND u.EMAIL IS NOT NULL
-  AND (u.PERFIL LIKE '%BOLETA%' OR u.PERFIL LIKE '%RENOVAR%')
+-- Query implementada
+SELECT DISTINCT u.DS_EMAIL
+FROM OPUS.MC_USUARIO u
+INNER JOIN OPUS.MC_USUARIO_PERFIL up ON up.ID_USUARIO = u.ID_USUARIO
+INNER JOIN OPUS.MC_PERFIL_FUNCAO_EVENTO pfe ON pfe.ID_PERFIL = up.ID_PERFIL
+WHERE pfe.ID_EVENTO = 27
+AND u.DS_EMAIL IS NOT NULL
+ORDER BY u.DS_EMAIL
 ```
-
-> **TODO**: Ajustar query conforme estrutura real da tabela de usuários
 
 ## 📈 Monitoramento
 
