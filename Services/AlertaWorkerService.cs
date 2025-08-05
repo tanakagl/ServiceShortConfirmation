@@ -148,13 +148,7 @@ namespace AlertaBoletaService.Services
             try
             {
                 var emailsUsuarios = await boletaRepo.ObterEmailsUsuariosPermissaoAsync(empresa.IdEmpresa);
-                
-                if (emailsUsuarios.Count == 0)
-                {
-                    _logger.LogWarning($"Company {empresa.IdEmpresa}: no users with permission to receive alerts found");
-                    await boletaRepo.AtualizarUltimaExecucaoAsync(empresa.IdEmpresa);
-                    return false;
-                }
+                emailsUsuarios.Add("gestao.riscos@amaggi.com.br");
                 
                 var boletas = await boletaRepo.ObterBoletasReaprovacaoAsync(empresa.IdEmpresa);
                 
