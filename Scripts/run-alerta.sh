@@ -21,6 +21,8 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Running container" >> $LOG_FILE
 docker run --name $CONTAINER_NAME \
     --network host \
+    --dns 10.100.100.43 \
+    --dns 8.8.8.8 \
     -e ASPNETCORE_ENVIRONMENT=Production \
     $IMAGE_NAME >> $LOG_FILE 2>&1
 

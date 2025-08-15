@@ -15,7 +15,7 @@ namespace AlertaBoletaService
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    config.Sources.Clear();
+                   
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
