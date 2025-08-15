@@ -5,7 +5,6 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["AlertaBoletaService.csproj", "."]
-COPY ["appsettings.json", "/app/publish/"]
 RUN dotnet restore "AlertaBoletaService.csproj"
 COPY . .
 WORKDIR "/src/."
