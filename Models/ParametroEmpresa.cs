@@ -15,7 +15,7 @@ namespace AlertaBoletaService.Models
         
         [Column("IN_NOTIFICA_BOLETA_REAPROVACAO")]
         [MaxLength(1)]
-        public string FlagNotificaBoleta { get; set; } = "N";
+        public string? FlagNotificaBoleta { get; set; }
         
         [Column("DT_ULTIMA_EXECUCAO_BOLETA")]
         public DateTime? UltimaExecucaoBoleta { get; set; }

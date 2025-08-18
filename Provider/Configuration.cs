@@ -20,7 +20,7 @@ namespace AlertaBoletaService.Provider
                         string path = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
 
                         if (!File.Exists(path))
-                            throw new FileNotFoundException("Erro: Arquivo appsettings.json n√£o encontrado.");
+                            throw new FileNotFoundException("Erro: Arquivo appsettings.json n„o encontrado.");
 
                         string json = File.ReadAllText(path);
                         _configuration = JObject.Parse(json);
@@ -42,24 +42,15 @@ namespace AlertaBoletaService.Provider
             var config = GetConfiguration();
             
             string jsonPath = name.Replace(":", ".");
-            JToken? token = config.SelectToken(jsonPath) ?? throw new ArgumentException($"Configura√ß√£o '{name}' n√£o encontrada no appsettings.json. Caminho JSON: '{jsonPath}'");
+            JToken? token = config.SelectToken(jsonPath) ?? throw new ArgumentException($"ConfiguraÁ„o '{name}' n„o encontrada no appsettings.json. Caminho JSON: '{jsonPath}'");
 
             T? value = token.Value<T>();
             if (value == null)
-                throw new ArgumentException($"Configura√ß√£o '{name}' possui valor nulo ou inv√°lido no appsettings.json.");
+                throw new ArgumentException($"ConfiguraÁ„o '{name}' possui valor nulo ou inv·lido no appsettings.json.");
             
             _cache.TryAdd(cacheKey, value);
             
             return value;
-        }
-        
-        public static void ClearCache()
-        {
-            _cache.Clear();
-            lock (_lock)
-            {
-                _configuration = null;
-            }
         }
     }
 } 
