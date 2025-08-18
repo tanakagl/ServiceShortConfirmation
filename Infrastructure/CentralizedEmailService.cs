@@ -1,15 +1,20 @@
+using System.Net.Http.Headers;
+using System.Text;
 using AlertaBoletaService.Provider;
+using Microsoft.Extensions.Configuration;
 
 namespace AlertaBoletaService.Infrastructure
 {
     public class CentralizedEmailService(
         ILogger<CentralizedEmailService> logger,
         HttpClient httpClient,
-        ParametrizacaoRepository parametrizacaoRepository)
+        ParametrizacaoRepository parametrizacaoRepository,
+        IConfiguration configuration)
     {
         private readonly ILogger<CentralizedEmailService> _logger = logger;
         private readonly HttpClient _httpClient = httpClient;
         private readonly ParametrizacaoRepository _parametrizacaoRepository = parametrizacaoRepository;
+        private readonly IConfiguration _configuration = configuration;
 
         public async Task<bool> SendEmailAsync(Email email)
         {
@@ -22,17 +27,17 @@ namespace AlertaBoletaService.Infrastructure
                     return false;
                 }
 
-                var requestUrl = $"{apiUrl}email/enviar";   
+                var requestUrl = $"{apiUrl}v1/email/enviar";   
                 _logger.LogInformation($"Sending email via API ({apiUrl}) to: {email.To}");
 
-                HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUrl);
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUrl);
 
                 var dictionary = new Dictionary<string, string>
                 {
-                    ["From"] = email.From,
-                    ["To"] = email.To,
-                    ["Subject"] = email.Subject,
-                    ["Body"] = email.Body
+                    ["From"] = email.From ?? "noreply@amaggi.com.br",
+                    ["To"] = email.To ?? "",
+                    ["Subject"] = email.Subject ?? "",
+                    ["Body"] = email.Body ?? ""
                 };
 
                 if (!string.IsNullOrEmpty(email.CC))
@@ -44,12 +49,21 @@ namespace AlertaBoletaService.Infrastructure
                 if (email.DataAgendamento.HasValue)
                     dictionary["DataAgendamento"] = email.DataAgendamento.Value.ToString("yyyy-MM-dd HH:mm:ss");
 
-                if (email.Attachments.Count != 0)
+                if (email.Attachments?.Count > 0)
                     dictionary["Attachments"] = string.Join(",", email.Attachments);
 
                 httpRequest.Content = new FormUrlEncodedContent(dictionary);
 
-                HttpResponseMessage httpResponse = await _httpClient.SendAsync(httpRequest);
+                var apiUser = _configuration.GetValue<string>("ApiSettings:User");
+                var apiPassword = _configuration.GetValue<string>("ApiSettings:Password");
+                
+                if (!string.IsNullOrEmpty(apiUser) && !string.IsNullOrEmpty(apiPassword))
+                {
+                    var basicCredential = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{apiUser}:{apiPassword}"));
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", basicCredential);
+                }
+
+                using var httpResponse = await _httpClient.SendAsync(httpRequest);
                 string bodyResponse = await httpResponse.Content.ReadAsStringAsync();
 
                 if (httpResponse.IsSuccessStatusCode)

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using AlertaBoletaService.Models;
-using AlertaBoletaService.Provider;
 
 namespace AlertaBoletaService.BD
 {
@@ -16,15 +15,7 @@ namespace AlertaBoletaService.BD
         }
         
         public DbSet<ParametroEmpresa> ParametroEmpresas { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                var connectionString = Configuration.GetValue<string>("ConnectionStrings:OracleConnection");
-                optionsBuilder.UseOracle(connectionString);
-            }
-        }
+        public DbSet<ParametroBoletaEmail> ParametroBoletaEmails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,6 +46,25 @@ namespace AlertaBoletaService.BD
                 entity.Property(e => e.UltimaExecucaoBoleta)
                     .HasColumnName("DT_ULTIMA_EXECUCAO_BOLETA")
                     .HasColumnType("DATE");
+            });
+            
+            modelBuilder.Entity<ParametroBoletaEmail>(entity =>
+            {
+                entity.HasKey(e => e.IdParamBoletasEmail);
+                entity.ToTable("MV_PARAM_BOLETAS_EMAIL");
+                
+                entity.Property(e => e.IdParamBoletasEmail)
+                    .HasColumnName("ID_PARAM_BOLETAS_EMAIL")
+                    .HasColumnType("NUMBER")
+                    .IsRequired();
+                
+                entity.Property(e => e.IdEmpresa)
+                    .HasColumnName("ID_EMPRESA")
+                    .HasColumnType("NUMBER");
+                
+                entity.Property(e => e.DsEmail)
+                    .HasColumnName("DS_EMAIL")
+                    .HasMaxLength(255);
             });
             
             base.OnModelCreating(modelBuilder);

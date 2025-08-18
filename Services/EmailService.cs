@@ -1,6 +1,7 @@
 using AlertaBoletaService.Models;
 using AlertaBoletaService.Infrastructure;
 using AlertaBoletaService.Provider;
+using Microsoft.Extensions.Configuration;
 
 namespace AlertaBoletaService.Services
 {
@@ -10,22 +11,26 @@ namespace AlertaBoletaService.Services
         string GerarCorpoEmailBoletas(List<BoletaReaprovacao> boletas);
     }
 
-    public class EmailService(ILogger<EmailService> logger, CentralizedEmailService centralizedEmailService) : IEmailService
+    public class EmailService(ILogger<EmailService> logger, CentralizedEmailService centralizedEmailService, IConfiguration configuration) : IEmailService
     {
         private readonly ILogger<EmailService> _logger = logger;
         private readonly CentralizedEmailService _centralizedEmailService = centralizedEmailService;
-
+        private readonly IConfiguration _configuration = configuration;
         public async Task<bool> EnviarEmailAsync(AlertaEmail email)
         {
             try
             {
-                var emailFrom = Configuration.GetValue<string>("EmailSettings:FromEmail");
+                var emailFrom = _configuration.GetValue<string>("EmailSettings:FromEmail") ?? "noreply@amaggi.com.br";
+                var user = _configuration.GetValue<string>("ApiSettings:User") ?? "NoUser";
+                var password = _configuration.GetValue<string>("ApiSettings:Password") ?? "NoPassword";
                 
                 var centralizedEmail = new Email(
                     from: emailFrom,
                     to: email.Para,
                     subject: email.Assunto,
-                    body: email.Corpo
+                    body: email.Corpo,
+                    user: user,
+                    password: password
                 );
 
                 bool sucesso = await _centralizedEmailService.SendEmailAsync(centralizedEmail);

@@ -1,6 +1,7 @@
 using AlertaBoletaService.Services;
 using AlertaBoletaService.BD;
 using AlertaBoletaService.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace AlertaBoletaService
 {
@@ -13,13 +14,14 @@ namespace AlertaBoletaService
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((context, config) =>
-                {
-                   
-                })
+
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddDbContext<AlertaDbContext>();
+                    services.AddDbContext<AlertaDbContext>(options =>
+                    {
+                        var connectionString = hostContext.Configuration.GetConnectionString("OracleConnection");
+                        options.UseOracle(connectionString);
+                    });
                     services.AddScoped<IBoletaRepository, BoletaRepository>();
                     
                     services.AddHttpClient();

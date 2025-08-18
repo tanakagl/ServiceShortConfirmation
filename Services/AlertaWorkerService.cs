@@ -2,6 +2,7 @@ using AlertaBoletaService.Models;
 using AlertaBoletaService.Repositories;
 using AlertaBoletaService.Provider;
 using Oracle.ManagedDataAccess.Client;
+using Microsoft.Extensions.Configuration;
 
 namespace AlertaBoletaService.Services
 {
@@ -10,24 +11,30 @@ namespace AlertaBoletaService.Services
         private readonly ILogger<AlertaWorkerService> _logger;
         private readonly IServiceProvider _serviceProvider;
         private readonly IHostApplicationLifetime _appLifetime;
+        private readonly IConfiguration _configuration;
         
         public AlertaWorkerService(
             ILogger<AlertaWorkerService> logger,
             IServiceProvider serviceProvider,
-            IHostApplicationLifetime appLifetime)
+            IHostApplicationLifetime appLifetime,
+            IConfiguration configuration)
         {
             _logger = logger;
             _serviceProvider = serviceProvider;
             _appLifetime = appLifetime;
+            _configuration = configuration;
         }
         
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
-                var connectionString = Configuration.GetValue<string>("ConnectionStrings:OracleConnection");
+                var connectionString = _configuration.GetConnectionString("OracleConnection") ?? "Configuration not found";
                 _logger.LogInformation("Short Confirmation Alert Service started - Single execution");
-                _logger.LogInformation($"Testing Oracle connection...");
+                
+
+                
+                _logger.LogInformation("Testing Oracle connection...");
                 
                 if (!await TestarConexaoAsync(connectionString))
                 {
@@ -147,9 +154,13 @@ namespace AlertaBoletaService.Services
         {
             try
             {
-                var emailsUsuarios = await boletaRepo.ObterEmailsUsuariosPermissaoAsync(empresa.IdEmpresa);
-                emailsUsuarios.Add("gestao.riscos@amaggi.com.br");
-                
+                var emailsUsuariosPermissao = await boletaRepo.ObterEmailsUsuariosPermissaoAsync(empresa.IdEmpresa);
+                var emailsUsuariosParametrizados = await boletaRepo.ObterEmailsParametrizadosAsync(empresa.IdEmpresa);
+                var todosEmails = new List<string>();
+                todosEmails.AddRange(emailsUsuariosPermissao);
+                todosEmails.AddRange(emailsUsuariosParametrizados);
+                todosEmails.Add("gestao.riscos@amaggi.com.br");
+
                 var boletas = await boletaRepo.ObterBoletasReaprovacaoAsync(empresa.IdEmpresa);
                 
                 if (boletas.Count != 0)
@@ -157,7 +168,7 @@ namespace AlertaBoletaService.Services
                     _logger.LogWarning($"Company {empresa.IdEmpresa}: {boletas.Count} short confirmation(s) pending reapproval found");
                     
                     var emailBody = emailService.GerarCorpoEmailBoletas(boletas);
-                    var emailsPara = string.Join(";", emailsUsuarios);
+                    var emailsPara = string.Join(";", todosEmails);
                     
                     var email = new AlertaEmail
                     {
@@ -169,7 +180,7 @@ namespace AlertaBoletaService.Services
                     if (await emailService.EnviarEmailAsync(email))
                     {
                         await boletaRepo.AtualizarUltimaExecucaoAsync(empresa.IdEmpresa);
-                        _logger.LogInformation($"Company {empresa.IdEmpresa}: alert sent successfully to {emailsUsuarios.Count} user(s)");
+                        _logger.LogInformation($"Company {empresa.IdEmpresa}: alert sent successfully to {todosEmails.Count} recipient(s)");
                         return true;
                     }
                     else

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using AlertaBoletaService.Provider;
+using Microsoft.Extensions.Configuration;
 
 namespace AlertaBoletaService.Repositories
 {
@@ -14,12 +15,16 @@ namespace AlertaBoletaService.Repositories
         Task<List<string>> ObterEmailsUsuariosPermissaoAsync(int empresaId);
         Task AtualizarUltimaExecucaoAsync(int empresaId);
         Task<ParametroEmpresa?> ObterParametroEmpresaAsync(int empresaId);
+        Task<List<string>> ObterEmailsParametrizadosAsync(int? empresaId);
     }
 
-    public class BoletaRepository(AlertaDbContext context, ILogger<BoletaRepository> logger) : IBoletaRepository
+    public class BoletaRepository(AlertaDbContext context, ILogger<BoletaRepository> logger, IConfiguration configuration) : IBoletaRepository
     {
         private readonly AlertaDbContext _context = context;
         private readonly ILogger<BoletaRepository> _logger = logger;
+        private readonly IConfiguration _configuration = configuration;
+        
+
         
         public async Task<List<BoletaReaprovacao>> ObterBoletasReaprovacaoAsync(int empresaId)
         {
@@ -27,7 +32,7 @@ namespace AlertaBoletaService.Repositories
             
             try
             {
-                var connectionString = Configuration.GetValue<string>("ConnectionStrings:OracleConnection");
+                var connectionString = _configuration.GetConnectionString("OracleConnection");
                 using var connection = new OracleConnection(connectionString);
                 await connection.OpenAsync();
                 
@@ -79,9 +84,15 @@ namespace AlertaBoletaService.Repositories
 
         public async Task<List<ParametroEmpresa>> ObterEmpresasAtivasAsync()
         {
-            return await _context.ParametroEmpresas
+            _logger.LogInformation("Fetching active companies...");
+            
+            var empresas = await _context.ParametroEmpresas
                 .Where(p => p.FlagNotificaBoleta == "S")
                 .ToListAsync();
+
+            _logger.LogInformation($"Found {empresas.Count} companies with active alerts");
+            
+            return empresas;
         }
 
        public async Task<List<string>> ObterEmailsUsuariosPermissaoAsync(int empresaId)
@@ -90,7 +101,7 @@ namespace AlertaBoletaService.Repositories
             
             try
             {
-                var connectionString = Configuration.GetValue<string>("ConnectionStrings:OracleConnection");
+                var connectionString = _configuration.GetConnectionString("OracleConnection");
                 using var connection = new OracleConnection(connectionString);
                 await connection.OpenAsync();
                 
@@ -146,6 +157,36 @@ namespace AlertaBoletaService.Repositories
         {
             return await _context.ParametroEmpresas
                 .FirstOrDefaultAsync(p => p.IdEmpresa == empresaId);
+        }
+
+        public async Task<List<string>> ObterEmailsParametrizadosAsync(int? empresaId = null)
+        {
+            try
+            {
+                var query = _context.ParametroBoletaEmails.AsQueryable();
+                
+                if (empresaId.HasValue)
+                {
+                    query = query.Where(p => p.IdEmpresa == empresaId.Value);
+                }
+                
+                var emails = await query
+                    .Where(p => !string.IsNullOrWhiteSpace(p.DsEmail))
+                    .Select(p => p.DsEmail!.Trim())
+                    .OrderBy(email => email)
+                    .ToListAsync();
+                
+                _logger.LogInformation($"Found {emails.Count} parameterized emails" + 
+                    (empresaId.HasValue ? $" for company {empresaId}" : " (all companies)"));
+                
+                return emails;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error searching parameterized emails" + 
+                    (empresaId.HasValue ? $" for company {empresaId}" : ""));
+                return [];
+            }
         }
     }
 } 
