@@ -170,16 +170,41 @@ namespace AlertaBoletaService.Repositories
                     query = query.Where(p => p.IdEmpresa == empresaId.Value);
                 }
                 
-                var emails = await query
+                var emailsFromDb = await query
                     .Where(p => !string.IsNullOrWhiteSpace(p.DsEmail))
                     .Select(p => p.DsEmail!.Trim())
-                    .OrderBy(email => email)
                     .ToListAsync();
                 
-                _logger.LogInformation($"Found {emails.Count} parameterized emails" + 
+                var emailsIndividuais = new List<string>();
+                foreach (var email in emailsFromDb)
+                {
+                    if (email.Contains(';'))
+                    {
+                        var emailsSeparados = email.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var emailSeparado in emailsSeparados)
+                        {
+                            var emailLimpo = emailSeparado.Trim();
+                            if (!string.IsNullOrWhiteSpace(emailLimpo) && !emailsIndividuais.Contains(emailLimpo))
+                            {
+                                emailsIndividuais.Add(emailLimpo);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!emailsIndividuais.Contains(email))
+                        {
+                            emailsIndividuais.Add(email);
+                        }
+                    }
+                }
+                
+                var emailsOrdenados = emailsIndividuais.OrderBy(email => email).ToList();
+                
+                _logger.LogInformation($"Found {emailsOrdenados.Count} parameterized emails" + 
                     (empresaId.HasValue ? $" for company {empresaId}" : " (all companies)"));
                 
-                return emails;
+                return emailsOrdenados;
             }
             catch (Exception ex)
             {

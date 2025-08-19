@@ -167,6 +167,13 @@ namespace AlertaBoletaService.Services
                 {
                     _logger.LogWarning($"Company {empresa.IdEmpresa}: {boletas.Count} short confirmation(s) pending reapproval found");
                     
+                    if (todosEmails.Count == 0)
+                    {
+                        _logger.LogWarning($"Company {empresa.IdEmpresa}: no email addresses configured for alerts");
+                        await boletaRepo.AtualizarUltimaExecucaoAsync(empresa.IdEmpresa);
+                        return false;
+                    }
+                    
                     var emailBody = emailService.GerarCorpoEmailBoletas(boletas);
                     var emailsPara = string.Join(";", todosEmails);
                     
