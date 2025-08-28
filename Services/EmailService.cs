@@ -55,19 +55,38 @@ namespace AlertaBoletaService.Services
 
         public string GerarCorpoEmailBoletas(List<BoletaReaprovacao> boletas)
         {
+            var boletasAprovacao = boletas.FindAll(b => b.StatusAtual == BoletaStatus.PendingApproval.ToDisplayString());
+            var boletasReaprovacao = boletas.FindAll(b => b.StatusAtual == BoletaStatus.PendingReApproval.ToDisplayString());
+
             var resumo = new
             {
                 Total = boletas.Count,
-                ValorTotal = boletas.Sum(b => b.ValorBoleta),
+                TotalAprovacao = boletasAprovacao.Count,
+                TotalReaprovacao = boletasReaprovacao.Count,
+                TotalAprovacaoValor = boletasAprovacao.Sum(b => b.ValorBoleta),
+                TotalReaprovacaoValor = boletasReaprovacao.Sum(b => b.ValorBoleta),
             };
 
-            var tabelaBoletas = GerarTabelaBoletas(boletas);
+            var tabelaBoletas = "";
+            
+            if (boletasAprovacao.Count > 0)
+            {
+                tabelaBoletas += GerarTabelaBoletas(boletasAprovacao, "approval");
+            }
+
+            if (boletasReaprovacao.Count > 0)
+            {
+                if (tabelaBoletas.Length > 0) tabelaBoletas += "\n";
+                tabelaBoletas += GerarTabelaBoletas(boletasReaprovacao, "re-approval");
+            }
 
             var mensagem = $@"
                 <div style='background-color: #E3E3E3; padding: 15px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #555555;'>
                     <h3 style='font-style: bold; margin: 0 0 10px 0;'>Alert Summary</h3>
-                    <p><strong>Total short confirmations:</strong> {resumo.Total}</p>
-                    <p><strong>Total value:</strong> USD {resumo.ValorTotal:N2}</p>
+                    <p><strong>Total short confirmations in approval:</strong> {resumo.TotalAprovacao}</p>
+                    <p><strong>Total short confirmations in re-approval:</strong> {resumo.TotalReaprovacao}</p>
+                    <p><strong>Total value approval:</strong> USD {resumo.TotalAprovacaoValor:N2}</p>
+                    <p><strong>Total value re-approval:</strong> USD {resumo.TotalReaprovacaoValor:N2}</p>
                 </div>
 
                 {tabelaBoletas}
@@ -87,27 +106,36 @@ namespace AlertaBoletaService.Services
             return layoutEmail.ToString();
         }
 
-        private static string GerarTabelaBoletas(List<BoletaReaprovacao> boletas)
+        private static string GerarTabelaBoletas(List<BoletaReaprovacao> boletas, string statusBoleta)
         {
-            var tabela = @"
-                <table style='width: 100%; border-collapse: collapse; margin-top: 20px;'>
-                    <thead>
-                        <tr>
-                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Short Confirmation #</th>
-                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Contract</th>
-                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Product</th>
-                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Value</th>
-                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Status</th>
-                            <th style='color: white; padding: 12px; text-align: left; font-weight: bold;'>Company</th>
-                        </tr>
-                    </thead>
-                    <tbody>";
+            var headerText = statusBoleta.ToLower() == "approval"
+                ? "PENDING APPROVAL SHORT CONFIRMATIONS"
+                : "PENDING RE-APPROVAL SHORT CONFIRMATIONS";
+
+            var tabela = $@"
+                <div style='margin-top: 20px;'>
+                    <div style='padding: 10px; border-radius: 5px 5px 0 0;'>
+                        <h3 style='margin: 0; font-size: 16px;'>{headerText}</h3>
+                    </div>
+                    <table style='width: 100%; border-collapse: collapse;'>
+                        <thead>
+                            <tr>
+                                <th style='padding: 12px; text-align: left; font-weight: bold;'>Short Confirmation #</th>
+                                <th style='padding: 12px; text-align: left; font-weight: bold;'>Contract</th>
+                                <th style='padding: 12px; text-align: left; font-weight: bold;'>Product</th>
+                                <th style='padding: 12px; text-align: left; font-weight: bold;'>Value</th>
+                                <th style='padding: 12px; text-align: left; font-weight: bold;'>Status</th>
+                                <th style='padding: 12px; text-align: left; font-weight: bold;'>Company</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
 
             foreach (var boleta in boletas)
             {
 
+                var rowStyle = "background-color: #f8f9fa;";
                 tabela += $@"
-                        <tr>
+                        <tr style='{(boletas.IndexOf(boleta) % 2 == 0 ? rowStyle : "")}'>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NumeroBoleta}</td>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NumeroContrato}</td>
                             <td style='padding: 10px; border-bottom: 1px solid #ddd;'>{boleta.NomeProduto}</td>
@@ -119,7 +147,8 @@ namespace AlertaBoletaService.Services
 
             tabela += @"
                     </tbody>
-                </table>";
+                </table>
+                </div>";
 
             return tabela;
         }

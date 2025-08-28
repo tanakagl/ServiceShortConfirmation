@@ -44,7 +44,6 @@ namespace AlertaBoletaService.Infrastructure
             sb.Append("			width: 100%;");
             sb.Append("			padding: 20px 0;");
             sb.Append("			text-align: center;");
-            sb.Append("			color: white;");
             sb.Append("			font-size: 24px;");
             sb.Append("			font-weight: bold;");
             sb.Append("		}");

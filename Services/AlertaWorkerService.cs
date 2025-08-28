@@ -161,11 +161,13 @@ namespace AlertaBoletaService.Services
                 todosEmails.AddRange(emailsUsuariosParametrizados);
                 todosEmails.Add("gestao.riscos@amaggi.com.br");
 
-                var boletas = await boletaRepo.ObterBoletasReaprovacaoAsync(empresa.IdEmpresa);
-                
-                if (boletas.Count != 0)
+                var boletas = await boletaRepo.ObterBoletasAsync(empresa.IdEmpresa);
+                var boletasAprovacao = boletas.FindAll(b => b.StatusAtual == BoletaStatus.PendingApproval.ToDisplayString());
+                var boletaReaprovacao = boletas.FindAll(b => b.StatusAtual == BoletaStatus.PendingReApproval.ToDisplayString());
+
+                if (boletasAprovacao.Count > 0 || boletaReaprovacao.Count > 0)
                 {
-                    _logger.LogWarning($"Company {empresa.IdEmpresa}: {boletas.Count} short confirmation(s) pending reapproval found");
+                    _logger.LogWarning($"Company {empresa.IdEmpresa}: Found {boletasAprovacao.Count} pending approval and {boletaReaprovacao.Count} pending re-approval short confirmation(s)");
                     
                     if (todosEmails.Count == 0)
                     {
@@ -175,12 +177,13 @@ namespace AlertaBoletaService.Services
                     }
                     
                     var emailBody = emailService.GerarCorpoEmailBoletas(boletas);
+
                     var emailsPara = string.Join(";", todosEmails);
                     
                     var email = new AlertaEmail
                     {
                         Para = emailsPara,
-                        Assunto = $"ALERT: {boletas.Count} short confirmation(s) pending reapproval",
+                        Assunto = $"ALERT: {boletasAprovacao.Count} pending approval, {boletaReaprovacao.Count} pending re-approval short confirmation(s)",
                         Corpo = emailBody
                     };
                     

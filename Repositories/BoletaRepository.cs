@@ -10,7 +10,7 @@ namespace AlertaBoletaService.Repositories
 {
     public interface IBoletaRepository
     {
-        Task<List<BoletaReaprovacao>> ObterBoletasReaprovacaoAsync(int empresaId);
+        Task<List<BoletaReaprovacao>> ObterBoletasAsync(int empresaId);
         Task<List<ParametroEmpresa>> ObterEmpresasAtivasAsync();
         Task<List<string>> ObterEmailsUsuariosPermissaoAsync(int empresaId);
         Task AtualizarUltimaExecucaoAsync(int empresaId);
@@ -26,7 +26,7 @@ namespace AlertaBoletaService.Repositories
         
 
         
-        public async Task<List<BoletaReaprovacao>> ObterBoletasReaprovacaoAsync(int empresaId)
+        public async Task<List<BoletaReaprovacao>> ObterBoletasAsync(int empresaId)
         {
             var boletas = new List<BoletaReaprovacao>();
             
@@ -44,6 +44,7 @@ namespace AlertaBoletaService.Repositories
                     b.NR_BOLETA,
                     CASE 
                         WHEN b.DS_STATUS_BOLETA = '5' THEN 'Pending Re-Approval'
+                        WHEN b.DS_STATUS_BOLETA = '0' THEN 'Pending Approval'
                         ELSE b.DS_STATUS_BOLETA 
                     END as DS_STATUS_BOLETA,
                     b.NR_VALOR_TOTAL_CONTRATO,
@@ -54,7 +55,7 @@ namespace AlertaBoletaService.Repositories
                 LEFT JOIN OPUS.SIGAM_EMPRESA se ON se.COD_EMPRESA = b.CD_EMPRESA
                 LEFT JOIN OPUS.MV_CONTRATO mc ON mc.ID_BOLETA  = b.ID_BOLETA 
                 WHERE b.CD_EMPRESA = :empresaId
-                AND b.DS_STATUS_BOLETA = '5'
+                AND b.DS_STATUS_BOLETA IN ('5', '0')
                 ORDER BY b.DT_BOLETA ASC";
                 
                 var parameter = new OracleParameter("empresaId", OracleDbType.Int32) { Value = empresaId };
